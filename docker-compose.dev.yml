@@ -1,0 +1,79 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        USER_UID: ${USER_ID:-1000}
+        USER_GID: ${GROUP_ID:-1000}
+    init: true
+    working_dir: /workspace
+    command: sleep infinity
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://${APP_DOMAIN:-goravel.localhost}
+      APP_HOST: 0.0.0.0
+      APP_PORT: 3000
+      DB_CONNECTION: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-goravel}
+      DB_USERNAME: ${DB_USERNAME:-goravel}
+      DB_PASSWORD: ${DB_PASSWORD:-goravel}
+      VITE_HOST: 0.0.0.0
+      VITE_HOST_DOMAIN: ${VITE_DOMAIN:-vite.goravel.localhost}
+      VITE_DEV_URL: http://${VITE_DOMAIN:-vite.goravel.localhost}
+      VITE_APP_PORT: 5173
+      VITE_USE_POLLING: ${VITE_USE_POLLING:-false}
+    volumes:
+      - .:/workspace
+      - go-modules:/go/pkg/mod
+      - go-build-cache:/home/dev/.cache/go-build
+      - npm-cache:/home/dev/.npm
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_proxy
+      - traefik.http.routers.goravel.rule=Host(`${APP_DOMAIN:-goravel.localhost}`)
+      - traefik.http.routers.goravel.entrypoints=web
+      - traefik.http.routers.goravel.service=goravel
+      - traefik.http.services.goravel.loadbalancer.server.port=3000
+      - traefik.http.routers.goravel-vite.rule=Host(`${VITE_DOMAIN:-vite.goravel.localhost}`)
+      - traefik.http.routers.goravel-vite.entrypoints=web
+      - traefik.http.routers.goravel-vite.service=goravel-vite
+      - traefik.http.services.goravel-vite.loadbalancer.server.port=5173
+    networks:
+      - app
+      - proxy
+
+  postgres:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-goravel}
+      POSTGRES_USER: ${DB_USERNAME:-goravel}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-goravel}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app
+
+volumes:
+  postgres-data:
+  go-modules:
+  go-build-cache:
+  npm-cache:
+
+networks:
+  app:
+  proxy:
+    name: traefik_proxy
+    external: true

@@ -1,0 +1,32 @@
+{
+    "name": "Goravel Inertia",
+    "dockerComposeFile": "../docker-compose.dev.yml",
+    "service": "app",
+    "workspaceFolder": "/workspace",
+    "remoteUser": "dev",
+    "shutdownAction": "stopCompose",
+    "mounts": [
+        "type=bind,source=/home/${localEnv:USER}/.ssh,target=/home/dev/.ssh,readonly",
+        "type=bind,source=/home/${localEnv:USER}/.gitconfig,target=/home/dev/.gitconfig,readonly",
+        "type=bind,source=/home/${localEnv:USER}/.config/opencode,target=/home/dev/.config/opencode",
+        "type=bind,source=/home/${localEnv:USER}/.local/share/opencode,target=/home/dev/.local/share/opencode",
+        "type=bind,source=/home/${localEnv:USER}/.local/state/opencode,target=/home/dev/.local/state/opencode"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "Vue.volar",
+                "dbaeumer.vscode-eslint",
+                "bradlc.vscode-tailwindcss",
+                "EditorConfig.EditorConfig",
+                "mikestead.dotenv"
+            ],
+            "settings": {
+                "go.toolsManagement.autoUpdate": true,
+                "typescript.tsdk": "node_modules/typescript/lib",
+                "editor.formatOnSave": true
+            }
+        }
+    }
+}

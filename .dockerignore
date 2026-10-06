@@ -1,0 +1,9 @@
+.git
+.env
+.idea
+.vscode
+.zed
+node_modules
+public/build
+public/hot
+tmp
