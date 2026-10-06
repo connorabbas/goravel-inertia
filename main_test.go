@@ -1,0 +1,106 @@
+package main
+
+import (
+	"errors"
+	"fmt"
+	"net/http/httptest"
+	"os"
+	"strings"
+	"testing"
+
+	"github.com/goravel/framework/contracts/database/schema"
+	"github.com/goravel/framework/foundation"
+	frameworkmock "github.com/goravel/framework/testing/mock"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"goravel/app/facades"
+	"goravel/bootstrap"
+)
+
+func TestMain(m *testing.M) {
+	if name := os.Getenv("GONERTIA_TEST_DATABASE"); name != "" {
+		config := facades.Config()
+		if !strings.HasPrefix(name, "gonertia_test_") || name == config.GetString("database.connections.postgres.database") {
+			fmt.Fprintln(os.Stderr, "GONERTIA_TEST_DATABASE must be a separate gonertia_test_* database")
+			os.Exit(1)
+		}
+		// Providers cache connections during boot, so select the test database first.
+		config.Add("database.connections.postgres.database", name)
+	}
+	bootstrap.Boot()
+	os.Exit(m.Run())
+}
+
+func TestHTTP(t *testing.T) {
+	router := facades.Route()
+	app := foundation.App
+	defer func() { foundation.App = app }()
+
+	t.Run("landing", func(t *testing.T) {
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, httptest.NewRequest("GET", "/", nil))
+		require.Equal(t, 200, response.Code)
+		require.Equal(t, "Gonertia: Goravel is running.", response.Body.String())
+	})
+
+	for _, test := range []struct {
+		name string
+		err  error
+		code int
+		body string
+	}{
+		{"ready", nil, 200, `{"status":"ok"}`},
+		{"database unavailable", errors.New("private database credentials"), 503, `{"status":"unavailable"}`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			database := frameworkmock.Factory().DB()
+			database.EXPECT().WithContext(mock.Anything).Return(database).Once()
+			database.EXPECT().Select(mock.Anything, "SELECT 1").Return(test.err).Once()
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, httptest.NewRequest("GET", "/health/ready", nil))
+			require.Equal(t, test.code, response.Code)
+			require.JSONEq(t, test.body, response.Body.String())
+			database.AssertExpectations(t)
+		})
+	}
+}
+
+func TestPostgresIntegration(t *testing.T) {
+	name := os.Getenv("GONERTIA_TEST_DATABASE")
+	if name == "" {
+		t.Skip("set GONERTIA_TEST_DATABASE to a separate gonertia_test_* database")
+	}
+	var databases []string
+	require.NoError(t, facades.DB().Select(&databases, "SELECT current_database()"))
+	require.Equal(t, []string{name}, databases)
+	response := httptest.NewRecorder()
+	facades.Route().ServeHTTP(response, httptest.NewRequest("GET", "/health/ready", nil))
+	require.Equal(t, 200, response.Code)
+	require.JSONEq(t, `{"status":"ok"}`, response.Body.String())
+
+	migration := smokeMigration{}
+	require.False(t, facades.Schema().HasTable("gonertia_migration_smoke"))
+	facades.Schema().Register([]schema.Migration{migration})
+	t.Cleanup(func() {
+		require.NoError(t, facades.Schema().DropIfExists("gonertia_migration_smoke"))
+	})
+	require.NoError(t, facades.Artisan().Call("migrate"))
+	require.True(t, facades.Schema().HasTable("gonertia_migration_smoke"))
+	require.NoError(t, facades.DB().Statement("INSERT INTO gonertia_migration_smoke (id) VALUES (1)"))
+	var ids []int
+	require.NoError(t, facades.DB().Select(&ids, "SELECT id FROM gonertia_migration_smoke"))
+	require.Equal(t, []int{1}, ids)
+	require.NoError(t, facades.Artisan().Call("migrate:status"))
+	require.NoError(t, facades.Artisan().Call("migrate:rollback --step=1"))
+	require.False(t, facades.Schema().HasTable("gonertia_migration_smoke"))
+}
+
+// This fixture is registered only in the isolated database integration test.
+type smokeMigration struct{}
+
+func (smokeMigration) Signature() string { return "20261006000000_gonertia_migration_smoke" }
+func (smokeMigration) Up() error {
+	return facades.Schema().Sql("CREATE TABLE gonertia_migration_smoke (id INTEGER PRIMARY KEY)")
+}
+func (smokeMigration) Down() error { return facades.Schema().Drop("gonertia_migration_smoke") }
