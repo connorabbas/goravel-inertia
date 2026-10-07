@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import ui from '@nuxt/ui/vite'
 import { resolve } from 'node:path'
 import { rmSync, writeFileSync } from 'node:fs'
 
@@ -30,7 +31,11 @@ export default defineConfig(({ command, mode }) => {
 
     return {
         base: command === 'build' ? '/build/' : '/',
-        plugins: [vue(), goravelHot(origin.origin)],
+        plugins: [
+            vue(),
+            goravelHot(origin.origin),
+            ui({ router: 'inertia' })
+        ],
         publicDir: false,
         build: {
             outDir: 'public/build',

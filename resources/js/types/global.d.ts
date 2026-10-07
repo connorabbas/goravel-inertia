@@ -7,6 +7,7 @@ import '@inertiajs/core'
 declare module '@inertiajs/core' {
     interface PageProps {
         appName: string
+        flash?: Record<string, unknown>
     }
 }
 

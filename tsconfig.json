@@ -11,8 +11,12 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "types": ["node"],
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "#build/ui": ["./node_modules/.nuxt-ui/ui"],
+      "#build/ui/*": ["./node_modules/.nuxt-ui/ui/*"]
+    }
   },
-  "include": ["resources/js/**/*.ts", "resources/js/**/*.vue", "vite.config.ts"],
+  "include": ["resources/js/**/*.ts", "resources/js/**/*.vue", "vite.config.ts", "auto-imports.d.ts", "components.d.ts"],
   "exclude": ["node_modules"]
 }

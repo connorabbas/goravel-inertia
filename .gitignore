@@ -10,3 +10,5 @@ tmp
 node_modules
 public/build
 public/hot
+auto-imports.d.ts
+components.d.ts

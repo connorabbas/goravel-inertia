@@ -4,18 +4,22 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
-        "typecheck": "vue-tsc --noEmit"
+        "build": "vite build && vue-tsc --noEmit",
+        "typecheck": "vue-tsc --noEmit",
+        "test:notifications": "vitest run tests/notifications.test.ts"
     },
     "dependencies": {
-        "vue": "^3.5.35",
-        "@inertiajs/vue3": "^3.3.1"
+        "@inertiajs/vue3": "^3.3.1",
+        "@nuxt/ui": "^4.11.3",
+        "tailwindcss": "^4.3.3",
+        "vue": "^3.5.35"
     },
     "devDependencies": {
-        "vite": "^6.4.4",
         "@types/node": "^22.19.19",
         "@vitejs/plugin-vue": "^6.0.0",
         "typescript": "^5.8.3",
+        "vite": "^6.4.4",
+        "vitest": "^5.0.3",
         "vue-tsc": "^3.0.0"
     }
 }
