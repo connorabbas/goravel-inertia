@@ -1,10 +1,11 @@
 module goravel
 
-go 1.25.0
+go 1.26.1
 
 require (
 	github.com/goravel/framework v1.18.0
 	github.com/goravel/gin v1.18.0
+	github.com/goravel/inertia v1.18.0
 	github.com/goravel/postgres v1.18.0
 	github.com/stretchr/testify v1.11.1
 )
@@ -85,6 +86,7 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
+	github.com/petaki/inertia-go v1.15.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pterm/pterm v0.12.83 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect

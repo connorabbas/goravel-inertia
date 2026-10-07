@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http/httptest"
@@ -37,13 +38,6 @@ func TestHTTP(t *testing.T) {
 	app := foundation.App
 	defer func() { foundation.App = app }()
 
-	t.Run("landing", func(t *testing.T) {
-		response := httptest.NewRecorder()
-		router.ServeHTTP(response, httptest.NewRequest("GET", "/", nil))
-		require.Equal(t, 200, response.Code)
-		require.Equal(t, "Gonertia: Goravel is running.", response.Body.String())
-	})
-
 	for _, test := range []struct {
 		name string
 		err  error
@@ -58,12 +52,87 @@ func TestHTTP(t *testing.T) {
 			database.EXPECT().WithContext(mock.Anything).Return(database).Once()
 			database.EXPECT().Select(mock.Anything, "SELECT 1").Return(test.err).Once()
 			response := httptest.NewRecorder()
-			router.ServeHTTP(response, httptest.NewRequest("GET", "/health/ready", nil))
+			request := httptest.NewRequest("GET", "/health/ready", nil)
+			request.Header.Set("X-Inertia", "true")
+			request.Header.Set("X-Inertia-Version", "stale")
+			router.ServeHTTP(response, request)
 			require.Equal(t, test.code, response.Code)
 			require.JSONEq(t, test.body, response.Body.String())
+			require.Empty(t, response.Header().Get("X-Inertia"))
+			require.Empty(t, response.Header().Get("Set-Cookie"))
 			database.AssertExpectations(t)
 		})
 	}
+}
+
+func TestInertiaPages(t *testing.T) {
+	for _, test := range []struct {
+		path, component, message string
+	}{
+		{"/", "Home", "Hello from Goravel, Inertia, Vue, and TypeScript."},
+		{"/about", "About", "This page is routed by Goravel and visited through Inertia."},
+	} {
+		t.Run(test.component, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			facades.Route().ServeHTTP(response, httptest.NewRequest("GET", test.path, nil))
+			require.Equal(t, 200, response.Code)
+			require.Contains(t, response.Header().Get("Content-Type"), "text/html")
+			require.Contains(t, response.Body.String(), `<div id="app"></div>`)
+			_, embedded, found := strings.Cut(response.Body.String(), `<script data-page="app" type="application/json">`)
+			require.True(t, found)
+			embedded, _, found = strings.Cut(embedded, "</script>")
+			require.True(t, found)
+			var initial struct {
+				Component string
+				URL       string
+				Version   string
+				Props     map[string]any
+			}
+			require.NoError(t, json.Unmarshal([]byte(embedded), &initial))
+			require.Equal(t, test.component, initial.Component)
+			require.Equal(t, test.path, initial.URL)
+			require.Equal(t, test.message, initial.Props["message"])
+			require.Equal(t, facades.Config().GetString("app.name"), initial.Props["appName"])
+
+			request := httptest.NewRequest("GET", test.path, nil)
+			request.Header.Set("X-Inertia", "true")
+			request.Header.Set("X-Inertia-Version", initial.Version)
+			response = httptest.NewRecorder()
+			facades.Route().ServeHTTP(response, request)
+			require.Equal(t, 200, response.Code)
+			require.Equal(t, "true", response.Header().Get("X-Inertia"))
+			require.Contains(t, response.Header().Get("Content-Type"), "application/json")
+			var visit map[string]any
+			require.NoError(t, json.Unmarshal(response.Body.Bytes(), &visit))
+			require.Equal(t, test.component, visit["component"])
+			require.Equal(t, test.path, visit["url"])
+			require.Equal(t, test.message, visit["props"].(map[string]any)["message"])
+
+			request.Header.Set("X-Inertia-Version", initial.Version+"-stale")
+			response = httptest.NewRecorder()
+			facades.Route().ServeHTTP(response, request)
+			require.Equal(t, 409, response.Code)
+			require.NotEmpty(t, response.Header().Get("X-Inertia-Location"))
+		})
+	}
+}
+
+func TestBuiltAssets(t *testing.T) {
+	manifest, err := os.ReadFile("public/build/.vite/manifest.json")
+	if os.IsNotExist(err) {
+		t.Skip("run npm run build to check production asset routing")
+	}
+	require.NoError(t, err)
+	var chunks map[string]struct{ File string }
+	require.NoError(t, json.Unmarshal(manifest, &chunks))
+	entry := chunks["resources/js/app.ts"].File
+	require.NotEmpty(t, entry)
+	response := httptest.NewRecorder()
+	facades.Route().ServeHTTP(response, httptest.NewRequest("GET", "/build/"+entry, nil))
+	require.Equal(t, 200, response.Code)
+	require.NotEmpty(t, response.Body.String())
+	require.Empty(t, response.Header().Get("Set-Cookie"))
+	require.Equal(t, "", facades.Config().GetString("inertia.vite.dev_url"))
 }
 
 func TestPostgresIntegration(t *testing.T) {

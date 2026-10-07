@@ -21,10 +21,7 @@ services:
       DB_DATABASE: ${DB_DATABASE:-goravel}
       DB_USERNAME: ${DB_USERNAME:-goravel}
       DB_PASSWORD: ${DB_PASSWORD:-goravel}
-      VITE_HOST: 0.0.0.0
-      VITE_HOST_DOMAIN: ${VITE_DOMAIN:-vite.goravel.localhost}
-      VITE_DEV_URL: http://${VITE_DOMAIN:-vite.goravel.localhost}
-      VITE_APP_PORT: 5173
+      VITE_ORIGIN: http://${VITE_DOMAIN:-vite.goravel.localhost}
       VITE_USE_POLLING: ${VITE_USE_POLLING:-false}
     volumes:
       - .:/workspace

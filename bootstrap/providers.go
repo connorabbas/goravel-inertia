@@ -13,6 +13,7 @@ import (
 	"github.com/goravel/framework/validation"
 	"github.com/goravel/framework/view"
 	"github.com/goravel/gin"
+	"github.com/goravel/inertia"
 	"github.com/goravel/postgres"
 )
 
@@ -30,5 +31,6 @@ func Providers() []foundation.ServiceProvider {
 		&gin.ServiceProvider{},
 		&database.ServiceProvider{},
 		&postgres.ServiceProvider{},
+		&goravelinertia.ServiceProvider{},
 	}
 }

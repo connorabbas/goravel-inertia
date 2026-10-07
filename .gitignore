@@ -7,3 +7,6 @@
 !.env.example
 storage
 tmp
+node_modules
+public/build
+public/hot

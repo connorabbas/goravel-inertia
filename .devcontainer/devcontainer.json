@@ -5,6 +5,10 @@
     "workspaceFolder": "/workspace",
     "remoteUser": "dev",
     "shutdownAction": "stopCompose",
+    "portsAttributes": {
+        "3000": { "onAutoForward": "ignore" },
+        "5173": { "onAutoForward": "ignore" }
+    },
     "mounts": [
         "type=bind,source=/home/${localEnv:USER}/.ssh,target=/home/dev/.ssh,readonly",
         "type=bind,source=/home/${localEnv:USER}/.gitconfig,target=/home/dev/.gitconfig,readonly",
@@ -24,8 +28,15 @@
             ],
             "settings": {
                 "go.toolsManagement.autoUpdate": true,
-                "typescript.tsdk": "node_modules/typescript/lib",
-                "editor.formatOnSave": true
+                "editor.formatOnSave": true,
+                "html.format.wrapAttributes": "force-expand-multiline",
+                "js/ts.tsdk.path": "node_modules/typescript/lib",
+                "js/ts.preferences.quoteStyle": "single",
+                "js/ts.format.semicolons": "remove",
+                "[vue]": {
+                    "editor.defaultFormatter": "Vue.volar",
+                    "editor.tabSize": 4
+                }
             }
         }
     }

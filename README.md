@@ -1,8 +1,8 @@
 # Gonertia
 
-Goravel Lite 1.18 with Gin, PostgreSQL, and an existing Traefik proxy.
-Step 2 implements the backend/database foundation only. Inertia, Vue,
-TypeScript, Nuxt UI integration, and authentication are deferred.
+Goravel Lite 1.18 with Gin, PostgreSQL, Inertia 3, Vue 3, TypeScript, and Vite
+behind an existing Traefik proxy. Two plain pages demonstrate server-driven
+routing; UI libraries, authentication, and SSR are not installed.
 
 Scaffold: `goravel/goravel-lite` revision
 `20a55f95b6ebca8411a81a687054fa944ed55939`. Framework and drivers are pinned
@@ -39,7 +39,7 @@ Dependency and database data are held in named Docker volumes.
 Once the application servers are running, Traefik routes:
 
 - `http://goravel.localhost` to Goravel on port 3000
-- `http://vite.goravel.localhost` to Vite on port 5173 (reserved for the next step)
+- `http://vite.goravel.localhost` to Vite assets and HMR on port 5173
 
 Goravel should listen on `0.0.0.0:3000`, and Vite should listen on
 `0.0.0.0:5173`. The container already supplies the matching application,
@@ -85,7 +85,9 @@ curl --fail http://goravel.localhost/
 curl --fail http://goravel.localhost/health/ready
 ```
 
-The landing response is `Gonertia: Goravel is running.` Readiness executes
+The landing response is now an HTML shell mounting the Vue `Home` page through
+Inertia. Start Vite or build the frontend as described below before opening it
+in your browser. Readiness executes
 `SELECT 1` through Goravel with a two-second query deadline and returns
 `{"status":"ok"}`. Database query failures return HTTP 503 with a generic
 response, without exposing credentials. For a direct container check, use
@@ -100,8 +102,10 @@ go vet ./...
 ./artisan migrate:status
 ```
 
-HTTP tests cover the landing page and readiness success/failure without needing
-a live database. The PostgreSQL integration test is opt-in. Create a separate,
+HTTP tests cover both pages' HTML and Inertia JSON responses, backend props,
+stale asset versions, and readiness success/failure without needing a live
+database. After a frontend build, they also verify static asset routing.
+The PostgreSQL integration test is opt-in. Create a separate,
 disposable test database once:
 
 ```sh
@@ -123,6 +127,78 @@ remain available for subsequent runs.
 
 Air watches Go source changes, including migrations, and ignores test files,
 runtime storage, build output, Git, and future frontend dependencies.
+
+## Vue / Inertia development
+
+Install the frontend dependencies once per checkout, inside the dev container:
+
+```sh
+npm ci
+```
+
+Use two terminals in `/workspace`, starting both servers yourself:
+
+```sh
+# Terminal 1: Go backend with reload
+air
+```
+
+```sh
+# Terminal 2: Vue / TypeScript assets with HMR
+npm run dev
+```
+
+Open **http://goravel.localhost**, not the Vite domain. `/` and `/about` are
+Goravel routes; Inertia's `<Link>` visits them without a full document reload.
+There is no Vue Router or separate frontend API. Props are passed by the Go
+controllers and typed using Vue's `<script setup lang="ts">`.
+
+Press **Ctrl+C** in each terminal to stop that server. Neither server starts
+automatically. Vite writes its browser-accessible origin into ignored
+`public/hot` while running and removes it on normal shutdown. If Vite is killed
+abruptly, remove the stale file with `rm -f public/hot` before using built assets.
+
+Vite always listens on `0.0.0.0:5173`; assets and WebSocket HMR are proxied through
+`http://vite.goravel.localhost` on browser port 80. Allowed hosts and CORS are
+restricted to the configured Vite hostname and `APP_URL`. Compose supplies
+`VITE_ORIGIN` and optional `VITE_USE_POLLING`;
+customize `APP_DOMAIN` / `VITE_DOMAIN` in `.env` and recreate the app container
+when changing them. The old `VITE_DEV_URL` variable is not used: only
+`public/hot` enables development assets, so built assets work without Vite.
+
+VS Code automatic forwarding is disabled for ports `3000` and `5173` using
+`portsAttributes` in `.devcontainer/devcontainer.json`; other ports can still
+be forwarded. Stop any existing forwards in VS Code's **Ports** panel. Use
+**Dev Containers: Rebuild Container** once to apply the updated container
+configuration and Compose environment; a cache-clearing rebuild is unnecessary.
+Parallel projects can reuse the internal ports with unique `APP_DOMAIN` and
+`VITE_DOMAIN` values, rather than allocating different host ports.
+
+### Frontend checks and built assets
+
+```sh
+npm run typecheck
+npm run test:config
+npm run build
+go test ./...
+```
+
+The build writes a manifest and hashed assets into ignored `public/build`.
+`test:config` checks Traefik/HMR settings and the hot-file lifecycle in a
+temporary directory without starting Vite or opening a port.
+With Vite stopped and no `public/hot`, Goravel loads `/build/` assets from this
+manifest. Restart Air after rebuilding: the adapter caches the manifest and
+asset version during application boot. `vite preview` is not needed; Goravel
+serves the app in both modes.
+
+Manual browser checks:
+
+- Load `/` and `/about` directly; both show messages supplied by Go.
+- Follow the Inertia links; navigation requests carry `X-Inertia: true` and
+  return page JSON. Browser back/forward should work.
+- Edit a `.vue` template while Vite is running and confirm HMR updates it.
+- Stop Vite, run `npm run build`, restart Air, and confirm both pages work
+  without the Vite server.
 
 ## Agent tooling
 
@@ -154,7 +230,7 @@ project conventions; the official skill instructs agents to read it:
 - Use the standard Goravel layout and the `goravel` module name.
 - Use Gin on `0.0.0.0:3000` and PostgreSQL at `postgres:5432`.
 - Preserve the existing Docker/Traefik setup.
-- Developers start and stop `air` manually; agents should not start it unasked.
+- Developers start and stop `air` and `npm run dev` manually; agents should not start them unasked.
 - Never commit `.env` or generated keys; Compose variables override `.env`.
 - Database write tests must use a separate `gonertia_test_*` database.
 - Verify changes with `go test ./...` and `go vet ./...`.
