@@ -1,7 +1,7 @@
 # Gonertia
 
 Goravel Lite, PostgreSQL, Inertia, Vue 3, TypeScript, and Nuxt UI behind Traefik.
-Includes two test pages; no authentication or SSR yet.
+Includes session authentication and account settings; SSR is not enabled.
 
 ## Setup
 
@@ -41,14 +41,18 @@ air          # Terminal 1: Goravel
 npm run dev  # Terminal 2: Vite
 ```
 
-Open **http://goravel.localhost**. `/` and `/about` demonstrate Inertia navigation.
+Open **http://goravel.localhost**. Register or sign in to use the dashboard and settings.
+Development verification and reset emails arrive at **http://mailpit.goravel.localhost** (Mailpit via Traefik).
+Mailpit accepts SMTP authentication without TLS on the private dev network so Goravel's mail facade can send to it. Do not use this configuration in production.
+Configure SMTP and a persistent 32-character-or-longer `APP_KEY` outside development.
+Set `SESSION_SECURE=true` when serving the app over HTTPS.
 Vite assets/HMR use **http://vite.goravel.localhost**. Press **Ctrl+C** in each
 terminal to stop its server; neither starts automatically.
 
 - Traefik handles ports `3000` and `5173`; VS Code auto-forwarding is disabled.
 - After changing Compose settings or domains, use **Dev Containers: Rebuild Container**.
   Stop any old forwards in VS Code's **Ports** panel.
-- For multiple projects, use unique `APP_DOMAIN` / `VITE_DOMAIN` values.
+- For multiple projects, use unique `APP_DOMAIN` / `VITE_DOMAIN` / `MAILPIT_DOMAIN` values.
 - To use built assets, stop Vite, run `npm run build`, and restart Air.
   If Vite was killed abruptly, remove stale `public/hot` first.
 
@@ -77,15 +81,24 @@ With Goravel running, check database readiness from the host:
 curl --fail http://goravel.localhost/health/ready
 ```
 
-Optional PostgreSQL integration test, using a separate disposable database:
+PostgreSQL integration tests (including the authentication journey) use a separate disposable database. Migrate it before running tests:
 
 ```sh
 # Create once, inside the container.
 PGPASSWORD="$DB_PASSWORD" createdb -h "$DB_HOST" -U "$DB_USERNAME" gonertia_test_smoke
+DB_DATABASE=gonertia_test_smoke ./artisan migrate
 GONERTIA_TEST_DATABASE=gonertia_test_smoke go test -count=1 ./...
 ```
 
 ## Errors and notifications
+
+Auth input validation uses Goravel Form Requests in `app/http/requests/auth`,
+including normalization filters, `confirmed`, and `unique` rules. Controllers
+use `ValidateRequest` and the Inertia adapter's `FlashErrors` bridge; passwords
+are never flashed. Check the installed Goravel APIs before adding Laravel-like
+helpers. Password checks use the Hash facade; reset/remember token storage and
+verification signatures remain application code because Goravel v1.18 lacks
+those higher-level authentication features.
 
 `AppRoot.vue` owns `UApp`, network-error toasts, and structured HTTP-error toasts.
 Flash `success_toast`, `error_toast`, `warning_toast` (or `warn_toast`),

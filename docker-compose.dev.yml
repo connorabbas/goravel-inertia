@@ -21,6 +21,10 @@ services:
       DB_DATABASE: ${DB_DATABASE:-goravel}
       DB_USERNAME: ${DB_USERNAME:-goravel}
       DB_PASSWORD: ${DB_PASSWORD:-goravel}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM_ADDRESS: no-reply@goravel.localhost
+      MAIL_FROM_NAME: Gonertia
       VITE_ORIGIN: http://${VITE_DOMAIN:-vite.goravel.localhost}
       VITE_USE_POLLING: ${VITE_USE_POLLING:-false}
     volumes:
@@ -62,6 +66,24 @@ services:
       retries: 10
     networks:
       - app
+
+  mailpit:
+    image: axllent/mailpit:latest
+    environment:
+      # Goravel v1.18 sends SMTP AUTH even without credentials. Mailpit's
+      # dev-only SMTP listener accepts it on the private app network.
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_proxy
+      - traefik.http.routers.goravel-mailpit.rule=Host(`${MAILPIT_DOMAIN:-mailpit.goravel.localhost}`)
+      - traefik.http.routers.goravel-mailpit.entrypoints=web
+      - traefik.http.routers.goravel-mailpit.service=goravel-mailpit
+      - traefik.http.services.goravel-mailpit.loadbalancer.server.port=8025
+    networks:
+      - app
+      - proxy
 
 volumes:
   postgres-data:
