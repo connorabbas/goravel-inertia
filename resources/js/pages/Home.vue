@@ -1,24 +1,102 @@
 <script setup lang="ts">
-import { Head, usePage } from '@inertiajs/vue3'
-
-defineProps<{ message: string }>()
-const page = usePage()
+import DefaultLayout from '@/layouts/Default.vue'
 </script>
 
 <template>
+    <DefaultLayout
+        title="Home"
+        description="A Goravel starter kit with Inertia, Vue, TypeScript and Nuxt UI."
+    >
+        <div>
+            <UPageHero
+                title="Goravel Nuxt UI Starter Kit"
+                description="A Goravel starter kit with Inertia, Vue, TypeScript and Nuxt UI."
+                :links="[
+                    {
+                        label: 'Get started',
+                        to: 'https://ui.nuxt.com/docs/components',
+                        target: '_blank',
+                        trailingIcon: 'i-lucide-arrow-right',
+                        size: 'xl'
+                    },
+                    {
+                        label: 'Use this template',
+                        to: 'https://github.com/goravel/goravel',
+                        target: '_blank',
+                        icon: 'simple-icons:github',
+                        size: 'xl',
+                        color: 'neutral',
+                        variant: 'subtle'
+                    }
+                ]"
+            />
 
-    <Head title="Home" />
-    <main class="mx-auto max-w-xl px-4 py-12">
-        <UCard>
-            <template #header>
-                <h1 class="text-xl font-semibold text-highlighted">{{ page.props.appName }}</h1>
-            </template>
-            <p class="text-default">{{ message }}</p>
-            <template #footer>
-                <nav aria-label="Main navigation">
-                    <UButton to="/about">About this test</UButton>
-                </nav>
-            </template>
-        </UCard>
-    </main>
+            <UPageSection
+                id="features"
+                title="Everything you need to build modern Vue apps"
+                description="Start with a solid foundation. This template includes all the essentials for building production-ready applications with Nuxt UI's powerful component system."
+                :features="[
+                    {
+                        icon: 'i-lucide-rocket',
+                        title: 'Pre-configured development tooling',
+                        description: 'Pre-configured with TypeScript, Tailwind CSS, and Vite. Focus on building features, not setting up tooling.'
+                    },
+                    {
+                        icon: 'i-lucide-palette',
+                        title: 'Beautiful by default',
+                        description:
+                            'Powered by Nuxt UI\'s design system with automatic dark mode, consistent spacing, and polished components that look great out of the box.'
+                    },
+                    {
+                        icon: 'i-lucide-zap',
+                        title: 'Lightning fast',
+                        description:
+                            'Optimized with Vite\'s blazing fast HMR, automatic code splitting, and tree-shaking. Your users will love the speed.'
+                    },
+                    {
+                        icon: 'i-lucide-blocks',
+                        title: '100+ components included',
+                        description:
+                            'Access Nuxt UI\'s comprehensive component library. From forms to navigation, everything is accessible, responsive, and customizable.'
+                    },
+                    {
+                        icon: 'i-lucide-code-2',
+                        title: 'Developer experience first',
+                        description:
+                            'Auto-imports, hot module replacement, and TypeScript support. Write less boilerplate and ship more features.'
+                    },
+                    {
+                        icon: 'i-lucide-shield-check',
+                        title: 'Built for scale',
+                        description: 'Modern Vue 3 architecture with Composition API, proper error handling, and security best practices built-in.'
+                    }
+                ]"
+            />
+
+            <UPageSection>
+                <UPageCTA
+                    title="Ready to build your next Goravel app?"
+                    description="Join thousands of developers building with Goravel and Nuxt UI. Get this template and start shipping today."
+                    variant="subtle"
+                    :links="[
+                        {
+                            label: 'Start building',
+                            to: 'https://ui.nuxt.com/docs/components',
+                            target: '_blank',
+                            trailingIcon: 'i-lucide-arrow-right',
+                            color: 'neutral'
+                        },
+                        {
+                            label: 'View on GitHub',
+                            to: 'https://github.com/goravel/goravel',
+                            target: '_blank',
+                            icon: 'simple-icons:github',
+                            color: 'neutral',
+                            variant: 'outline'
+                        }
+                    ]"
+                />
+            </UPageSection>
+        </div>
+    </DefaultLayout>
 </template>

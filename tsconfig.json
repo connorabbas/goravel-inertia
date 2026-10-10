@@ -13,6 +13,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "paths": {
+	  "@/*": ["./resources/js/*"],
       "#build/ui": ["./node_modules/.nuxt-ui/ui"],
       "#build/ui/*": ["./node_modules/.nuxt-ui/ui/*"]
     }

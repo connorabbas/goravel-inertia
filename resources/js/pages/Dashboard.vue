@@ -1,0 +1,25 @@
+<script setup lang="ts">
+import AppLayout from '@/layouts/app/Index.vue'
+</script>
+
+<template>
+    <AppLayout
+        title="Dashboard"
+        description="This is your authenticated application area."
+    >
+        <UPage>
+            <UPageHeader
+                title="Dashboard"
+                description="This is your authenticated application area."
+            />
+
+            <UPageBody>
+                <UPageCard
+                    title="Welcome to the Goravel + Nuxt UI Starter Kit"
+                    description="You are logged in!"
+                    variant="subtle"
+                />
+            </UPageBody>
+        </UPage>
+    </AppLayout>
+</template>

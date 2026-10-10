@@ -34,8 +34,12 @@ export default defineConfig(({ command, mode }) => {
         plugins: [
             vue(),
             goravelHot(origin.origin),
-            ui({ router: 'inertia' })
+            ui({
+                router: 'inertia',
+                icon: { clientBundle: { icons: ['simple-icons:github'] } }
+            })
         ],
+        resolve: { alias: { '@': resolve('resources/js') } },
         publicDir: false,
         build: {
             outDir: 'public/build',

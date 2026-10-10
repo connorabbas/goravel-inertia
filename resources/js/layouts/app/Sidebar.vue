@@ -1,0 +1,145 @@
+<script setup lang="ts">
+import type { NavigationMenuItem } from '@nuxt/ui'
+import { Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { useAppLayout } from '@/composables/useAppLayout'
+import { useStorage } from '@vueuse/core'
+import AppLogo from '@/components/AppLogo.vue'
+import FlashAlerts from '@/components/FlashAlerts.vue'
+
+const props = defineProps<{
+    pageTitle?: string
+    subPageNavItems?: NavigationMenuItem[]
+}>()
+
+const { navMenuItems, userMenuItems, user } = useAppLayout()
+
+const pageTitle = computed(() => props.pageTitle ?? 'Application')
+
+const sidebarCollapsed = useStorage('sidebar-collapsed', false, undefined, { initOnMounted: true })
+
+const groups = computed(() => [
+    {
+        id: 'links',
+        label: 'Go to',
+        items: navMenuItems.value
+            .flat()
+            .filter((item) => item.label && item.to)
+            .map((item) => ({
+                label: item.label,
+                icon: item.icon,
+                to: item.to,
+                target: item.target
+            }))
+    }
+])
+</script>
+
+<template>
+    <UDashboardGroup unit="rem">
+        <UDashboardSidebar
+            id="default"
+            v-model:collapsed="sidebarCollapsed"
+            collapsible
+            resizable
+            class="bg-elevated/25"
+            :ui="{ footer: 'lg:border-t lg:border-default' }"
+        >
+            <template #header="{ collapsed }">
+                <div class="flex w-full justify-center">
+                    <Link
+                        href="/"
+                        aria-label="Application logo"
+                    >
+                        <UIcon v-if="collapsed" name="i-lucide-box" class="size-7 text-primary" />
+                        <AppLogo
+                            v-else
+                            class="h-6 w-auto shrink-0"
+                        />
+                    </Link>
+                </div>
+            </template>
+
+            <template #default="{ collapsed }">
+                <UDashboardSearchButton
+                    :collapsed="collapsed"
+                    class="ring-default bg-transparent"
+                />
+
+                <UNavigationMenu
+                    :collapsed="collapsed"
+                    :items="navMenuItems[0]"
+                    orientation="vertical"
+                    tooltip
+                    popover
+                />
+
+                <UNavigationMenu
+                    :collapsed="collapsed"
+                    :items="navMenuItems[1]"
+                    orientation="vertical"
+                    tooltip
+                    class="mt-auto"
+                />
+            </template>
+
+            <template #footer="{ collapsed }">
+                <UDropdownMenu
+                    v-if="user"
+                    :items="userMenuItems"
+                    :content="{ align: 'center', collisionPadding: 12 }"
+                    :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }"
+                >
+                    <UTooltip
+                        :disabled="!collapsed"
+                        :content="{ side: 'right' }"
+                        text="Account"
+                    >
+                        <UButton
+                            class="data-[state=open]:bg-elevated"
+                            color="neutral"
+                            variant="ghost"
+                            block
+                            :label="collapsed ? undefined : user.name"
+                            :icon="collapsed ? 'i-lucide-user' : undefined"
+                            :trailing-icon="collapsed ? undefined : 'i-lucide-chevrons-up-down'"
+                            :square="collapsed"
+                            :ui="{ trailingIcon: 'text-dimmed' }"
+                        />
+                    </UTooltip>
+                </UDropdownMenu>
+            </template>
+        </UDashboardSidebar>
+
+        <UDashboardSearch :groups="groups" />
+
+        <UDashboardPanel :ui="{ body: 'py-0!' }">
+            <template #header>
+                <UDashboardNavbar :title="pageTitle">
+                    <template #leading>
+                        <UDashboardSidebarCollapse />
+                    </template>
+                    <template #right>
+                        <slot name="actions" />
+                    </template>
+                </UDashboardNavbar>
+
+                <UDashboardToolbar v-if="props.subPageNavItems">
+                    <div class="flex w-full flex-col gap-3 md:flex-row md:items-center">
+                        <UNavigationMenu
+                            :items="props.subPageNavItems"
+                            highlight
+                            class="-mx-1 flex-1"
+                        />
+                    </div>
+                </UDashboardToolbar>
+            </template>
+
+            <template #body>
+                <FlashAlerts />
+
+                <slot />
+            </template>
+        </UDashboardPanel>
+    </UDashboardGroup>
+</template>

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import DefaultLayout from '@/layouts/Default.vue'
 
 defineProps<{ message: string }>()
 </script>
 
 <template>
 
-    <Head title="About" />
+    <DefaultLayout title="About">
     <main class="mx-auto max-w-xl px-4 py-12">
         <UCard>
             <template #header>
@@ -20,4 +20,5 @@ defineProps<{ message: string }>()
             </template>
         </UCard>
     </main>
+    </DefaultLayout>
 </template>

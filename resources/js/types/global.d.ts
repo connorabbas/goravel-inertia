@@ -8,6 +8,9 @@ declare module '@inertiajs/core' {
     interface PageProps {
         appName: string
         flash?: Record<string, unknown>
+		auth: { user: { id: number; name: string; email: string; emailVerifiedAt: string | null } | null }
+		config: { appName: string; timezone: string }
+		csrfToken: string
     }
 }
 
