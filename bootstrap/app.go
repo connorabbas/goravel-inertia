@@ -12,6 +12,7 @@ import (
 
 func Boot() contractsfoundation.Application {
 	return foundation.Setup().
+		WithMigrations(Migrations).
 		WithMiddleware(func(middleware configuration.Middleware) {
 			middleware.Recover(responses.Recover)
 		}).

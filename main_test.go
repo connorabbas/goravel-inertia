@@ -350,7 +350,9 @@ func TestPostgresIntegration(t *testing.T) {
 type smokeMigration struct{}
 
 func (smokeMigration) Signature() string { return "20261006000000_gonertia_migration_smoke" }
+
 func (smokeMigration) Up() error {
 	return facades.Schema().Sql("CREATE TABLE gonertia_migration_smoke (id INTEGER PRIMARY KEY)")
 }
+
 func (smokeMigration) Down() error { return facades.Schema().Drop("gonertia_migration_smoke") }

@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"github.com/goravel/framework/auth"
 	"github.com/goravel/framework/cache"
 	"github.com/goravel/framework/contracts/foundation"
 	"github.com/goravel/framework/database"
@@ -8,6 +9,8 @@ import (
 	"github.com/goravel/framework/hash"
 	"github.com/goravel/framework/http"
 	"github.com/goravel/framework/log"
+	"github.com/goravel/framework/mail"
+	"github.com/goravel/framework/queue"
 	"github.com/goravel/framework/route"
 	"github.com/goravel/framework/session"
 	"github.com/goravel/framework/validation"
@@ -32,5 +35,8 @@ func Providers() []foundation.ServiceProvider {
 		&database.ServiceProvider{},
 		&postgres.ServiceProvider{},
 		&goravelinertia.ServiceProvider{},
+		&auth.ServiceProvider{},
+		&queue.ServiceProvider{},
+		&mail.ServiceProvider{},
 	}
 }

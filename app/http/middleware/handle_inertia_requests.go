@@ -33,5 +33,13 @@ func share(ctx http.Context) map[string]any {
 	return map[string]any{
 		// Available on every page as usePage().props.appName.
 		"appName": facades.Config().GetString("app.name"),
+		"auth": map[string]any{"user": func() any {
+			if u := CurrentUser(ctx); u != nil {
+				return u.Public()
+			}
+			return nil
+		}()},
+		"config":    map[string]any{"appName": facades.Config().GetString("app.name"), "timezone": "UTC"},
+		"csrfToken": ctx.Request().Session().Token(),
 	}
 }

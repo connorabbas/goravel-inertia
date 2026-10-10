@@ -18,6 +18,7 @@ func init() {
 		// framework needs to place the application's name in a notification or
 		// any other location as required by the application or its packages.
 		"name": config.Env("APP_NAME", "Goravel"),
+		"url":  config.Env("APP_URL", "http://goravel.localhost"),
 
 		// Application Environment
 		//
